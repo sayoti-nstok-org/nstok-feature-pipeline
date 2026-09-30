@@ -90,17 +90,7 @@ export const initialMockDeals: DealDTO[] = [
 ];
 
 function getStoredDeals(): DealDTO[] {
-  if (typeof window === "undefined") return initialMockDeals;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_DEALS);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY_DEALS, JSON.stringify(initialMockDeals));
-      return initialMockDeals;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return initialMockDeals;
-  }
+  return [];
 }
 
 function saveStoredDeals(data: DealDTO[]): void {
