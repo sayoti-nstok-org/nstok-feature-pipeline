@@ -24,11 +24,21 @@ import {
 } from "lucide-react";
 
 export function PipelineKanbanBoard() {
-  const { currentPipeline, setCreateDealModalOpen } = usePipelineStore();
-  const { data: deals = [], isLoading } = useDeals(currentPipeline.id);
-  const moveDealMutation = useMoveDeal(currentPipeline.id);
+  const { data: pipelines = [] } = usePipelines();
+  const { currentPipeline: storePipeline, setCurrentPipeline, setCreateDealModalOpen } = usePipelineStore();
 
-  const stages = currentPipeline.stages || [];
+  const activePipeline = pipelines.find((p) => p.id === storePipeline.id) || pipelines[0] || storePipeline;
+
+  React.useEffect(() => {
+    if (pipelines.length > 0 && (!storePipeline.id || storePipeline.id === "pipe-01")) {
+      setCurrentPipeline(pipelines[0]);
+    }
+  }, [pipelines, storePipeline.id, setCurrentPipeline]);
+
+  const { data: deals = [], isLoading } = useDeals(activePipeline.id);
+  const moveDealMutation = useMoveDeal(activePipeline.id);
+
+  const stages = activePipeline.stages || [];
 
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -191,14 +201,23 @@ export function PipelineKanbanBoard() {
 }
 
 function CreateDealModal() {
-  const { currentPipeline, isCreateDealModalOpen, setCreateDealModalOpen } = usePipelineStore();
-  const createDealMutation = useCreateDeal(currentPipeline.id);
+  const { data: pipelines = [] } = usePipelines();
+  const { currentPipeline: storePipeline, isCreateDealModalOpen, setCreateDealModalOpen } = usePipelineStore();
+  const activePipeline = pipelines.find((p) => p.id === storePipeline.id) || pipelines[0] || storePipeline;
+  const createDealMutation = useCreateDeal(activePipeline.id);
 
+  const stages = activePipeline.stages || [];
   const [title, setTitle] = useState("");
   const [value, setValue] = useState(5000000);
   const [customerId, setCustomerId] = useState("cust-01");
   const [customerName, setCustomerName] = useState("Budi Santoso");
-  const [stageId, setStageId] = useState("stage-lead");
+  const [stageId, setStageId] = useState(stages[0]?.id || "stage-lead");
+
+  React.useEffect(() => {
+    if (stages.length > 0 && (!stageId || stageId === "stage-lead")) {
+      setStageId(stages[0].id);
+    }
+  }, [stages, stageId]);
 
   if (!isCreateDealModalOpen) return null;
 
@@ -206,8 +225,8 @@ function CreateDealModal() {
     e.preventDefault();
     createDealMutation.mutate(
       {
-        pipelineId: currentPipeline.id,
-        stageId,
+        pipelineId: activePipeline.id,
+        stageId: stageId || stages[0]?.id,
         customerId,
         customerName,
         title,
@@ -268,7 +287,7 @@ function CreateDealModal() {
                 onChange={(e) => setStageId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-background border border-border/80 focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
-                {currentPipeline.stages?.map((s) => (
+                {stages.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
